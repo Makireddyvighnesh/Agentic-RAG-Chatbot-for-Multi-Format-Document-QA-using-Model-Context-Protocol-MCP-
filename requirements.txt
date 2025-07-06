@@ -1,0 +1,11 @@
+mcp['cli']
+python-dotenv
+openai
+pypdf
+python-pptx
+pandas
+python-docx
+langchain-text-splitters
+sentence-transformers
+faiss-cpu
+numpy
