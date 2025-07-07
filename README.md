@@ -20,23 +20,48 @@ This project demonstrates how to build an extensible, agent‑based RAG system:
 
 ```mermaid
 graph TD
-    UI[💬 Streamlit UI] --> Coordinator[🤖 AgentCoordinator]
-
-    subgraph "Agent Services"
-      Coordinator --> Ingestion[📄 IngestionAgent]
-      Coordinator --> Retrieval[🔎 RetrievalAgent]
-      Coordinator --> LLM[🧠 LLMResponseAgent]
+    subgraph "User Interface"
+        UI[💬 Streamlit UI]
     end
 
-    subgraph "Data & APIs"
-        Ingestion --> Chunks[(chunks.json)]
-        Retrieval --> Chunks
-        Retrieval --> VectorDB[(FAISS Index)]
-        LLM --> LLM_API[☁️ DeepSeek API]
+    subgraph "Orchestrator"
+        Coordinator[🤖 AgentCoordinator]
     end
 
-    style Coordinator fill:#d1c4e9,stroke:#333
+    subgraph "Agent Services (MCP Servers)"
+        Ingestion[📄 IngestionAgent]
+        QA[🧠 QA_Agent <br> (Handles Retrieval & LLM Logic)]
+    end
+
+    subgraph "Data Stores & APIs"
+        Files[(📁 Raw Files)]
+        ChunksDb[(📝 chunks.json)]
+        VectorDb[(📚 FAISS Index)]
+        LLM_API[☁️ LLM API]
+    end
+
+    %% Control Flow (Solid Lines)
+    UI -- "User Actions" --> Coordinator
+    Coordinator -- "1. process_files()" --> Ingestion
+    Coordinator -- "2. build_index()" --> QA
+    Coordinator -- "3. answer_query()" --> QA
+    QA -- "Internal RAG Loop" --> LLM_API
+
+    %% Data Flow (Dashed Lines)
+    Ingestion -.-> Files
+    Ingestion -.-> ChunksDb
+    QA -.-> ChunksDb
+    QA -.-> VectorDb
+
+    %% Styling
     style UI fill:#bbdefb,stroke:#333
+    style Coordinator fill:#d1c4e9,stroke:#333
+    style Ingestion fill:#e3f2fd,stroke:#555
+    style QA fill:#e3f2fd,stroke:#555
+    style Files fill:#fffde7,stroke:#777
+    style ChunksDb fill:#fffde7,stroke:#777
+    style VectorDb fill:#fffde7,stroke:#777
+    style LLM_API fill:#ffe0b2,stroke:#777
 
 ```
 
