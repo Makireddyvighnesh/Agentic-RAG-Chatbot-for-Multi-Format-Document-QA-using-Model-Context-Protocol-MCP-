@@ -19,19 +19,25 @@ This project demonstrates how to build an extensible, agent‑based RAG system:
 ## 🏛️ Architecture & Workflow
 
 ```mermaid
-flowchart TD
-  subgraph UI
-    A[Streamlit App]
-    A -->|uploads| C[Coordinator]
-  end
-  subgraph MCP Agents
-    C -->|start| I[IngestionAgent]
-    C -->|start| R[RetrievalAgent]
-    C -->|start| L[LLMResponseAgent]
-    C -->|process_docs| I -->|chunks.json| R
-    C -->|answer_query| R -->|context| C -->|final_prompt| L -->|answer| C
-  end
-  C -->|display| A
+graph TD
+    UI[💬 Streamlit UI] --> Coordinator[🤖 AgentCoordinator]
+
+    subgraph "Agent Services"
+      Coordinator --> Ingestion[📄 IngestionAgent]
+      Coordinator --> Retrieval[🔎 RetrievalAgent]
+      Coordinator --> LLM[🧠 LLMResponseAgent]
+    end
+
+    subgraph "Data & APIs"
+        Ingestion --> Chunks[(chunks.json)]
+        Retrieval --> Chunks
+        Retrieval --> VectorDB[(FAISS Index)]
+        LLM --> LLM_API[☁️ DeepSeek API]
+    end
+
+    style Coordinator fill:#d1c4e9,stroke:#333
+    style UI fill:#bbdefb,stroke:#333
+
 ```
 
 1. **Startup**: Coordinator launches each agent (STDIO MCP).
