@@ -44,8 +44,8 @@ The workflow is designed around an LLM-driven tool-use paradigm, orchestrated by
 1.  **Clone the repo**:
 
     ```bash
-    git clone https://github.com/Makireddyvighnesh/Agentic-RAG-Chatbot-for-Multi-Format-Document-QA-using-Model-Context-Protocol-MCP-.git
-    cd Agentic-RAG-Chatbot-for-Multi-Format-Document-QA-using-Model-Context-Protocol-MCP-
+    git clone https://github.com/Makireddyvighnesh/Agentic-RAG-Chatbot-using-Model-Context-Protocol-MCP-.git
+    cd Agentic-RAG-Chatbot-using-Model-Context-Protocol-MCP-
     ```
 
 2.  **Create & activate venv**:
