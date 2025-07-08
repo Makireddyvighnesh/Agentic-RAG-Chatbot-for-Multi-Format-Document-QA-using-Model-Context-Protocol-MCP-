@@ -19,7 +19,6 @@ This project demonstrates how to build an extensible, agent‑based RAG system:
 ## 🏛️ Architecture & Workflow
 
 ```mermaid
-```mermaid
 graph TD
     subgraph "User Interface"
         UI[💬 Streamlit UI]
