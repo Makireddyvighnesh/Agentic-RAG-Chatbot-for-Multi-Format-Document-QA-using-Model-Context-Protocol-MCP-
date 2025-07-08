@@ -1,109 +1,75 @@
-**Agentic RAG Chatbot for Multi‑Format Document QA**
+# **Agentic RAG Chatbot for Multi-Format Document QA**
 
-A Streamlit‑based Retrieval‑Augmented Generation (RAG) chatbot built with an agentic architecture using Model Context Protocol (MCP). Users can upload documents (PDF, PPTX, DOCX, CSV, TXT), and the system parses, indexes, and answers questions based solely on their content.
+A Streamlit-based Retrieval-Augmented Generation (RAG) chatbot built with an agentic architecture using Model Context Protocol (MCP). The system's core logic is driven by an LLM that decides when to use tools provided by specialized MCP servers to answer questions based on user-uploaded documents.
 
 ---
 
 ## 📦 Project Overview
 
-This project demonstrates how to build an extensible, agent‑based RAG system:
+This project is built on a client-server model where specialized agents act as tool providers.
 
-* **IngestionAgent**: Parses documents into text chunks and stores them.
-* **RetrievalAgent**: Encodes chunks into embeddings and builds a FAISS index for semantic search.
-* **LLMResponseAgent**: Composes prompts with retrieved context and generates answers via DeepSeek/OpenAI.
-* **Coordinator** (`app.py`): Orchestrates agent startup, document processing, and multi‑step query handling (planning → retrieval → response).
-* **Streamlit UI**: Provides a web interface for uploading documents and chatting with your data.
+*   **MCP Servers (The Tool Providers)**: These are independent Python scripts (`ingestion_agent.py`, `qa_agent.py`) that run as background processes. They expose their capabilities—like parsing a file or retrieving information—as callable tools.
+*   **MCP Client (The Application Core)**: It connects to the MCP servers to access their tools.
+*   **LLM (The Reasoning Engine)**: The Large Language Model (e.g., DeepSeek) is the "brain." The client presents it with a user's question and a list of available tools. The LLM then decides if it needs to call a tool to get more information before answering.
+*   **Streamlit UI**: A web interface for uploading documents and chatting with your data.
 
 ---
 
 ## 🏛️ Architecture & Workflow
 
-```mermaid
-graph TD
-    subgraph "User Interface"
-        UI[💬 Streamlit UI]
-    end
+The workflow is designed around an LLM-driven tool-use paradigm, orchestrated by the MCP Client.
 
-    subgraph "Orchestrator (The MCP Client)"
-        Coordinator[🤖 AgentCoordinator]
-    end
+![RAG MCP Architecture Diagram](MCP_RAG_Architecture.png)
 
-    subgraph "Agent Services (The MCP Servers)"
-        Ingestion[📄 IngestionAgent]
-        QA[🧠 QA_Agent <br> (Handles Retrieval & LLM Logic)]
-    end
+### **Step-by-Step Flow**
 
-    subgraph "Data Stores & APIs"
-        Files[(📁 Raw Files)]
-        ChunksDb[(📝 chunks.json)]
-        VectorDb[(📚 FAISS Index)]
-        LLM_API[☁️ LLM API]
-    end
+1.  **Document Processing (Building the Knowledge Base):**
+    *   A user uploads documents via the **Streamlit UI**.
+    *   The **MCP Client** accesses the `process_files` tool from the **Ingestion Agent Server**.
+    *   The Client calls this tool to preprocess the documents into text chunks.
+    *   The Client then uses the `build_index` tool from the **Retrieval Agent Server** to embed these chunks and create a searchable FAISS vector index.
 
-    %% Control Flow (Solid Lines)
-    UI -- "1. Upload Documents" --> Coordinator
-    UI -- "4. Ask Question" --> Coordinator
-    
-    Coordinator -- "Tool Call: process_files()" --> Ingestion
-    Coordinator -- "Tool Call: build_index()" --> QA
-    Coordinator -- "Tool Call: answer_query()" --> QA
-    QA -- "Internal Calls" --> LLM_API
-
-    %% Data Flow (Dashed Lines)
-    Ingestion -.-> Files
-    Ingestion -.-> ChunksDb
-    QA -.-> ChunksDb
-    QA -.-> VectorDb
- 
-```
-
-1. **Startup**: Coordinator launches each agent (STDIO MCP).
-2. **Ingestion**: User uploads files → IngestionAgent parses & chunks → saved to `chunks.json`.
-3. **Indexing**: RetrievalAgent reads chunks, encodes embeddings, builds FAISS index.
-4. **Query Handling**:
-
-   * Coordinator sends user query to RetrievalAgent.
-   * RetrievalAgent returns top‑k relevant chunks.
-   * Coordinator forwards query + context to LLMResponseAgent.
-   * LLMResponseAgent returns the final answer.
-5. **Display**: Coordinator streams answer and source snippets back to Streamlit UI.
+2.  **Query Handling (Reasoning and Acting):**
+    *   A user asks a question.
+    *   The **MCP Client** presents this question to the **LLM**, making it aware of a `retrieve_context` tool available from the **Retrieval Agent Server**.
+    *   The **LLM**, acting as the reasoning engine, determines it needs more information to answer and decides to call the `retrieve_context` tool.
+    *   The **MCP Client** executes this tool call on behalf of the LLM, which makes the **Retrieval Agent Server** search its vector database for relevant information.
+    *   The retrieved context is sent back to the **LLM**.
+    *   Now equipped with the necessary information, the **LLM** generates the final, context-aware answer.
 
 ---
 
 ## ⚙️ Installation & Setup
 
-1. **Clone the repo**:
+1.  **Clone the repo**:
 
-   ```bash
-   git clone https://github.com/Makireddyvighnesh/Agentic-RAG-Chatbot-for-Multi-Format-Document-QA-using-Model-Context-Protocol-MCP-.git
-   cd Agentic-RAG-Chatbot
-   ```
+    ```bash
+    git clone https://github.com/Makireddyvighnesh/Agentic-RAG-Chatbot-for-Multi-Format-Document-QA-using-Model-Context-Protocol-MCP-.git
+    cd Agentic-RAG-Chatbot-for-Multi-Format-Document-QA-using-Model-Context-Protocol-MCP-
+    ```
 
-2. **Create & activate venv**:
+2.  **Create & activate venv**:
 
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate     # macOS/Linux
-   .\.venv\Scripts\activate  # Windows
-   ```
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate     # macOS/Linux
+    .\.venv\Scripts\activate  # Windows
+    ```
 
-3. **Install dependencies**:
+3.  **Create `.env` file**: Create a file named `.env` and add your API key:
+    ```
+    DEEPSEEK_API_KEY="your_secret_api_key_here"
+    ```
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+4.  **Install dependencies**:
 
-4. **Run Agents** (in separate terminals):
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-   ```bash
-   python ./server/ingestion_agent.py
-   python ./server/retrieval_agent.py
-   python ./server/llm_agent.py
-   ```
+5.  **Start Streamlit**: The application handles starting the agents for you.
 
-5. **Start Streamlit**:
-
-   ```bash
-   streamlit run streamlit_app.py
-   ```
-
+    ```bash
+    streamlit run streamlit_app.py
+    ```
+```
