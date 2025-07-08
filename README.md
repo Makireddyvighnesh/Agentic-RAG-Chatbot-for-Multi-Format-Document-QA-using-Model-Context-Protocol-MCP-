@@ -24,11 +24,11 @@ graph TD
         UI[💬 Streamlit UI]
     end
 
-    subgraph "Orchestrator"
+    subgraph "Orchestrator (The MCP Client)"
         Coordinator[🤖 AgentCoordinator]
     end
 
-    subgraph "Agent Services (MCP Servers)"
+    subgraph "Agent Services (The MCP Servers)"
         Ingestion[📄 IngestionAgent]
         QA[🧠 QA_Agent <br> (Handles Retrieval & LLM Logic)]
     end
@@ -41,28 +41,20 @@ graph TD
     end
 
     %% Control Flow (Solid Lines)
-    UI -- "User Actions" --> Coordinator
-    Coordinator -- "1. process_files()" --> Ingestion
-    Coordinator -- "2. build_index()" --> QA
-    Coordinator -- "3. answer_query()" --> QA
-    QA -- "Internal RAG Loop" --> LLM_API
+    UI -- "1. Upload Documents" --> Coordinator
+    UI -- "4. Ask Question" --> Coordinator
+    
+    Coordinator -- "Tool Call: process_files()" --> Ingestion
+    Coordinator -- "Tool Call: build_index()" --> QA
+    Coordinator -- "Tool Call: answer_query()" --> QA
+    QA -- "Internal Calls" --> LLM_API
 
     %% Data Flow (Dashed Lines)
     Ingestion -.-> Files
     Ingestion -.-> ChunksDb
     QA -.-> ChunksDb
     QA -.-> VectorDb
-
-    %% Styling
-    style UI fill:#bbdefb,stroke:#333
-    style Coordinator fill:#d1c4e9,stroke:#333
-    style Ingestion fill:#e3f2fd,stroke:#555
-    style QA fill:#e3f2fd,stroke:#555
-    style Files fill:#fffde7,stroke:#777
-    style ChunksDb fill:#fffde7,stroke:#777
-    style VectorDb fill:#fffde7,stroke:#777
-    style LLM_API fill:#ffe0b2,stroke:#777
-
+ 
 ```
 
 1. **Startup**: Coordinator launches each agent (STDIO MCP).
